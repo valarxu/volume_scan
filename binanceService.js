@@ -6,9 +6,6 @@ const axios = require('axios');
 const client = axios.create({
     baseURL: 'https://fapi.binance.com',
     timeout: 10000,
-    headers: {
-        'X-MBX-APIKEY': process.env.BINANCE_API_KEY
-    }
 });
 
 class BinanceService {
