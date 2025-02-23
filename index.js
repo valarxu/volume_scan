@@ -60,17 +60,34 @@ async function formatAnalysisResults(klineResults, exchange) {
     
     if (abnormalVolumes.length > 0) {
         message += `${exchange}检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：\n`;
-        message += '交易对      成交量比率    当前成交量    平均成交量    涨跌幅    收盘价\n';
+        message += '```\n';
+        const columns = {
+            symbol: 10,
+            ratio: 12,
+            current: 12,
+            avg: 12,
+            change: 8,
+            price: 10
+        };
+        
+        message += 
+            '交易对'.padEnd(columns.symbol) +
+            '成交量比率'.padEnd(columns.ratio) +
+            '当前成交量'.padEnd(columns.current) +
+            '平均成交量'.padEnd(columns.avg) +
+            '涨跌幅'.padEnd(columns.change) +
+            '收盘价\n';
         
         abnormalVolumes.forEach(result => {
             message += 
-                `${result.symbol.padEnd(12)} ` +
-                `${result.volumeRatio.toFixed(2).padEnd(12)} ` +
-                `${formatNumber(result.currentVolume).padEnd(12)} ` +
-                `${formatNumber(result.avgVolume).padEnd(12)} ` +
-                `${result.priceChange.toFixed(2).padStart(6)}% ` +
-                `${result.closePrice.toFixed(4)}\n`;
+                result.symbol.slice(0, columns.symbol).padEnd(columns.symbol) +
+                result.volumeRatio.toFixed(2).padEnd(columns.ratio) +
+                formatNumber(result.currentVolume).padEnd(columns.current) +
+                formatNumber(result.avgVolume).padEnd(columns.avg) +
+                result.priceChange.toFixed(2).padStart(6).padEnd(columns.change) +
+                result.closePrice.toFixed(4) + '\n';
         });
+        message += '```\n';
     } else {
         message += `\n${exchange}未检测到异常成交量的交易对`;
     }
