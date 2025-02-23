@@ -56,15 +56,11 @@ async function formatAnalysisResults(klineResults, exchange) {
         .filter(result => result.volumeRatio >= config.VOLUME_MULTIPLIER)
         .sort((a, b) => b.volumeRatio - a.volumeRatio);
 
-    let message = `\n${exchange}分析结果：\n`;
-    message += '------------------------------------------------\n';
-    message += `总计分析了 ${klineResults.length} 个交易对\n`;
-    message += `成交量比率阈值：${config.VOLUME_MULTIPLIER}倍\n`;
+    let message = ``;
     
     if (abnormalVolumes.length > 0) {
-        message += `\n检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：\n`;
+        message += `${exchange}检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：\n`;
         message += '交易对      成交量比率    当前成交量    平均成交量    涨跌幅    收盘价\n';
-        message += '--------------------------------------------------------------------------------\n';
         
         abnormalVolumes.forEach(result => {
             message += 
@@ -79,7 +75,6 @@ async function formatAnalysisResults(klineResults, exchange) {
         message += `\n${exchange}未检测到异常成交量的交易对`;
     }
     
-    message += '\n------------------------------------------------\n';
     message += `${exchange}检查完成时间：${new Date().toLocaleString()}`;
 
     return message;
