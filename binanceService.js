@@ -1,12 +1,5 @@
 const config = require('./config');
 const { axiosInstance, sleep } = require('./utils');
-const axios = require('axios');
-
-// 创建axios实例时移除代理配置
-const client = axios.create({
-    baseURL: 'https://fapi.binance.com',
-    timeout: 10000,
-});
 
 class BinanceService {
     // 获取所有活跃合约信息
