@@ -75,7 +75,7 @@ async function formatAnalysisResults(klineResults, exchange) {
         message += `\n${exchange}未检测到异常成交量的交易对`;
     }
     
-    message += `${exchange}检查完成时间：${new Date().toLocaleString()}`;
+    message += `\n${exchange}检查完成时间：${new Date().toLocaleString()}`;
 
     return message;
 }
