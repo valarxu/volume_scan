@@ -8,6 +8,9 @@ module.exports = {
     KLINE_LIMIT: 20, // K线数量
     BATCH_DELAY: 500, // 批处理延迟（毫秒）
     
+    // 币安API基础URL
+    BINANCE_FAPI_BASE: 'https://fapi.binance.com',
+    
     // OKX API配置
     OKX_CONFIG: {
         apiKey: process.env.OKX_API_KEY || '',
