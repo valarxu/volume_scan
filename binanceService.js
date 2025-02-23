@@ -44,20 +44,21 @@ class BinanceService {
             
             if (response.data && response.data.length > 0) {
                 const klines = response.data;
-                const volumes = klines.map(k => parseFloat(k[5])); // 第6个元素是成交量
+                const volumes = klines.map(k => parseFloat(k[5]));
                 
-                // 获取最后一根K线的数据
                 const lastKline = klines[klines.length - 1];
                 const openPrice = parseFloat(lastKline[1]);
                 const closePrice = parseFloat(lastKline[4]);
                 const priceChange = ((closePrice - openPrice) / openPrice) * 100;
                 
-                // 计算平均成交量（除去最后一根K线）
                 const avgVolume = volumes.slice(0, -1).reduce((a, b) => a + b, 0) / (volumes.length - 1);
                 const currentVolume = volumes[volumes.length - 1];
                 
+                // 移除 USDT 后缀
+                const cleanSymbol = symbol.replace('USDT', '');
+                
                 return {
-                    symbol,
+                    symbol: cleanSymbol,
                     currentVolume,
                     avgVolume,
                     volumeRatio: currentVolume / avgVolume,

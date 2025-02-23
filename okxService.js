@@ -104,8 +104,11 @@ class OkxService {
                 const avgVolume = volumes.slice(0, -1).reduce((a, b) => a + b, 0) / (volumes.length - 1);
                 const currentVolume = volumes[volumes.length - 1];
                 
+                // 移除 -USDT-SWAP 后缀
+                const cleanSymbol = symbol.replace('-USDT-SWAP', '');
+                
                 return {
-                    symbol,
+                    symbol: cleanSymbol,
                     currentVolume,
                     avgVolume,
                     volumeRatio: currentVolume / avgVolume,

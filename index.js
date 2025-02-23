@@ -164,13 +164,8 @@ async function printAnalysisResults(klineResults, exchange) {
         .filter(result => result.volumeRatio >= config.VOLUME_MULTIPLIER)
         .sort((a, b) => b.volumeRatio - a.volumeRatio);
 
-    console.log(`\n${exchange}分析结果：`);
-    console.log('------------------------------------------------');
-    console.log(`总计分析了 ${klineResults.length} 个交易对`);
-    console.log(`成交量比率阈值：${config.VOLUME_MULTIPLIER}倍`);
-    
     if (abnormalVolumes.length > 0) {
-        console.log(`\n检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：`);
+        console.log(`\n${exchange}检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：`);
         console.log('交易对      成交量比率    当前成交量    平均成交量    涨跌幅    收盘价');
         console.log('--------------------------------------------------------------------------------');
         
@@ -188,7 +183,6 @@ async function printAnalysisResults(klineResults, exchange) {
         console.log('\n未检测到异常成交量的交易对');
     }
     
-    console.log('\n------------------------------------------------');
     console.log(`${exchange}检查完成时间：${new Date().toLocaleString()}`);
 }
 
