@@ -1,5 +1,6 @@
 require('dotenv').config();
 const cron = require('node-cron');
+const TelegramBot = require('node-telegram-bot-api');
 const config = require('./config');
 const { formatNumber } = require('./utils');
 const binanceService = require('./binanceService');
@@ -9,6 +10,80 @@ const okxService = require('./okxService');
 const isOkxConfigured = process.env.OKX_API_KEY && 
                        process.env.OKX_SECRET_KEY && 
                        process.env.OKX_PASSPHRASE;
+
+// 初始化 Telegram Bot
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+    polling: false, // 关闭轮询模式
+    request: {
+        timeout: 30000 // 增加超时时间到30秒
+    }
+});
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+// 添加消息发送函数，增加重试机制
+async function sendTelegramMessage(message, retries = 3) {
+    if (!process.env.TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.log('Telegram配置未完成，跳过消息推送');
+        return;
+    }
+
+    for (let i = 0; i < retries; i++) {
+        try {
+            const MAX_LENGTH = 3000;
+            if (message.length <= MAX_LENGTH) {
+                await bot.sendMessage(TELEGRAM_CHAT_ID, message);
+            } else {
+                const parts = message.match(new RegExp(`.{1,${MAX_LENGTH}}`, 'g')) || [];
+                for (const part of parts) {
+                    await bot.sendMessage(TELEGRAM_CHAT_ID, part);
+                    await new Promise(resolve => setTimeout(resolve, 500)); // 增加消息间隔到500ms
+                }
+            }
+            return; // 发送成功，退出函数
+        } catch (error) {
+            console.error(`Telegram消息发送失败(第${i + 1}次尝试):`, error.message);
+            if (i === retries - 1) {
+                console.error('Telegram消息发送最终失败');
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 失败后等待2秒再重试
+            }
+        }
+    }
+}
+
+async function formatAnalysisResults(klineResults, exchange) {
+    const abnormalVolumes = klineResults
+        .filter(result => result.volumeRatio >= config.VOLUME_MULTIPLIER)
+        .sort((a, b) => b.volumeRatio - a.volumeRatio);
+
+    let message = `\n${exchange}分析结果：\n`;
+    message += '------------------------------------------------\n';
+    message += `总计分析了 ${klineResults.length} 个交易对\n`;
+    message += `成交量比率阈值：${config.VOLUME_MULTIPLIER}倍\n`;
+    
+    if (abnormalVolumes.length > 0) {
+        message += `\n检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：\n`;
+        message += '交易对      成交量比率    当前成交量    平均成交量    涨跌幅    收盘价\n';
+        message += '--------------------------------------------------------------------------------\n';
+        
+        abnormalVolumes.forEach(result => {
+            message += 
+                `${result.symbol.padEnd(12)} ` +
+                `${result.volumeRatio.toFixed(2).padEnd(12)} ` +
+                `${formatNumber(result.currentVolume).padEnd(12)} ` +
+                `${formatNumber(result.avgVolume).padEnd(12)} ` +
+                `${result.priceChange.toFixed(2).padStart(6)}% ` +
+                `${result.closePrice.toFixed(4)}\n`;
+        });
+    } else {
+        message += `\n${exchange}未检测到异常成交量的交易对`;
+    }
+    
+    message += '\n------------------------------------------------\n';
+    message += `${exchange}检查完成时间：${new Date().toLocaleString()}`;
+
+    return message;
+}
 
 async function analyzeBinanceMarketVolume() {
     try {
@@ -32,10 +107,16 @@ async function analyzeBinanceMarketVolume() {
         console.log('正在分析K线成交量...\n');
         const klineResults = await binanceService.processKlinesInBatches(highVolumeSymbols);
 
+        // 控制台打印
         await printAnalysisResults(klineResults, 'Binance');
+        
+        // Telegram推送
+        const message = await formatAnalysisResults(klineResults, 'Binance');
+        await sendTelegramMessage(message);
 
     } catch (error) {
         console.error('币安程序执行出错:', error.message);
+        await sendTelegramMessage(`币安程序执行出错: ${error.message}`);
     }
 }
 
@@ -65,10 +146,16 @@ async function analyzeOkxMarketVolume() {
         console.log('正在分析K线成交量...\n');
         const klineResults = await okxService.processKlinesInBatches(highVolumeSymbols);
 
+        // 控制台打印
         await printAnalysisResults(klineResults, 'OKX');
+        
+        // Telegram推送
+        const message = await formatAnalysisResults(klineResults, 'OKX');
+        await sendTelegramMessage(message);
 
     } catch (error) {
         console.error('OKX程序执行出错:', error.message);
+        await sendTelegramMessage(`OKX程序执行出错: ${error.message}`);
     }
 }
 
@@ -108,11 +195,18 @@ async function printAnalysisResults(klineResults, exchange) {
 async function runAnalysis() {
     console.log('开始执行市场分析...');
     
-    // 并行执行两个交易所的分析
-    await Promise.all([
-        analyzeBinanceMarketVolume(),
-        analyzeOkxMarketVolume()
-    ]);
+    try {
+        // 串行执行而不是并行，避免同时发起太多请求
+        await analyzeBinanceMarketVolume().catch(error => {
+            console.error('币安分析失败:', error.message);
+        });
+        
+        await analyzeOkxMarketVolume().catch(error => {
+            console.error('OKX分析失败:', error.message);
+        });
+    } catch (error) {
+        console.error('市场分析执行出错:', error.message);
+    }
 }
 
 // 设置定时任务：每小时的第55分钟执行

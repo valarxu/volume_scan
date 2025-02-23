@@ -3,10 +3,6 @@ const axios = require('axios');
 const config = require('./config');
 const { sleep, formatNumber } = require('./utils');
 const crypto = require('crypto');
-const { HttpsProxyAgent } = require('https-proxy-agent');
-
-// 创建代理agent
-const proxyAgent = new HttpsProxyAgent(`http://${config.PROXY_CONFIG.host}:${config.PROXY_CONFIG.port}`);
 
 // 生成OKX API所需的签名
 function generateSignature(timestamp, method, requestPath, body = '') {
@@ -19,11 +15,11 @@ function generateSignature(timestamp, method, requestPath, body = '') {
 
 // 创建OKX专用的axios实例
 const okxAxiosInstance = axios.create({
-    baseURL: config.OKX_API_BASE,
+    baseURL: 'https://www.okx.com',
     timeout: 10000,
-    httpsAgent: proxyAgent,
     headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'OK-ACCESS-KEY': process.env.OKX_API_KEY,
+        'OK-ACCESS-PASSPHRASE': process.env.OKX_PASSPHRASE
     }
 });
 
@@ -35,10 +31,8 @@ okxAxiosInstance.interceptors.request.use((reqConfig) => {
     const body = reqConfig.data || '';
 
     reqConfig.headers = reqConfig.headers || {};
-    reqConfig.headers['OK-ACCESS-KEY'] = config.OKX_CONFIG.apiKey;
     reqConfig.headers['OK-ACCESS-TIMESTAMP'] = timestamp;
     reqConfig.headers['OK-ACCESS-SIGN'] = generateSignature(timestamp, method, requestPath, body);
-    reqConfig.headers['OK-ACCESS-PASSPHRASE'] = config.OKX_CONFIG.passphrase;
 
     return reqConfig;
 });
