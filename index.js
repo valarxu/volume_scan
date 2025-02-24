@@ -67,6 +67,11 @@ async function formatAnalysisResults(klineResults, exchange) {
             price: 14
         };
         
+        // Calculate the max length of volumeRatio, priceChange, and closePrice for left alignment
+        const maxRatioLength = Math.max(...abnormalVolumes.map(result => result.volumeRatio.toFixed(2).length));
+        const maxChangeLength = Math.max(...abnormalVolumes.map(result => result.priceChange.toFixed(2).length));
+        const maxPriceLength = Math.max(...abnormalVolumes.map(result => result.closePrice.toFixed(4).length));
+
         message += 
             '币种'.padEnd(columns.symbol) +
             '异常比率'.padEnd(columns.ratio) +
@@ -76,9 +81,9 @@ async function formatAnalysisResults(klineResults, exchange) {
         abnormalVolumes.forEach(result => {
             message += 
                 result.symbol.slice(0, columns.symbol).padEnd(columns.symbol) +
-                String(result.volumeRatio.toFixed(2)).padEnd(columns.ratio) +
-                String(result.priceChange.toFixed(2)).padEnd(columns.change) +
-                String(result.closePrice.toFixed(4)).padEnd(columns.price) + '\n';
+                result.volumeRatio.toFixed(2).padStart(maxRatioLength) + // Left-align volumeRatio
+                result.priceChange.toFixed(2).padStart(maxChangeLength) + // Left-align priceChange
+                result.closePrice.toFixed(4).padStart(maxPriceLength) + '\n'; // Left-align closePrice
         });
     } else {
         message += `\n${exchange}未检测到异常成交量的交易对`;
