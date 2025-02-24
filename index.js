@@ -61,19 +61,15 @@ async function formatAnalysisResults(klineResults, exchange) {
     if (abnormalVolumes.length > 0) {
         message += `${exchange}检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：\n`;
         const columns = {
-            symbol: 8,
-            ratio: 6,
-            current: 8,
-            avg: 8,
-            change: 8,
-            price: 10
+            symbol: 20,
+            ratio: 12,
+            change: 12,
+            price: 12
         };
         
         message += 
             'coin'.padEnd(columns.symbol) +
             'radio'.padEnd(columns.ratio) +
-            'curVol'.padEnd(columns.current) +
-            'avgVol'.padEnd(columns.avg) +
             'change'.padEnd(columns.change) +
             'close\n';
         
@@ -81,10 +77,8 @@ async function formatAnalysisResults(klineResults, exchange) {
             message += 
                 result.symbol.slice(0, columns.symbol).padEnd(columns.symbol) +
                 result.volumeRatio.toFixed(2).padEnd(columns.ratio) +
-                formatNumber(result.currentVolume).padEnd(columns.current) +
-                formatNumber(result.avgVolume).padEnd(columns.avg) +
                 result.priceChange.toFixed(2).padEnd(columns.change) +
-                result.closePrice.toFixed(3) + '\n';
+                result.closePrice.toFixed(4) + '\n';
         });
     } else {
         message += `\n${exchange}未检测到异常成交量的交易对`;
@@ -145,9 +139,13 @@ async function analyzeOkxMarketVolume() {
         const volume24h = await okxService.get24hVolume();
 
         const highVolumeSymbols = activeSymbols
-            .filter(symbol => 
-                (volume24h[symbol.instId] || 0) > config.OKX_VOLUME_THRESHOLD
-            )
+            .filter(symbol => {
+                const volume = volume24h[symbol.instId] || 0;
+                if (volume < config.OKX_VOLUME_THRESHOLD) {
+                    console.log(`跳过 ${symbol.instId}, 24h成交量(${formatNumber(volume)})低于阈值${formatNumber(config.OKX_VOLUME_THRESHOLD)}`);
+                }
+                return volume > config.OKX_VOLUME_THRESHOLD;
+            })
             .map(symbol => symbol.instId)
             .sort((a, b) => (volume24h[b] || 0) - (volume24h[a] || 0));
 
