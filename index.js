@@ -59,19 +59,19 @@ async function formatAnalysisResults(klineResults, exchange) {
     let message = ``;
     
     if (abnormalVolumes.length > 0) {
-        message += `${exchange}检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：\n`;
+        message += `${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
         const columns = {
-            symbol: 20,
-            ratio: 12,
-            change: 12,
-            price: 12
+            symbol: 14,
+            ratio: 14,
+            change: 14,
+            price: 14
         };
         
         message += 
-            'coin'.padEnd(columns.symbol) +
-            'radio'.padEnd(columns.ratio) +
-            'change'.padEnd(columns.change) +
-            'close\n';
+            '币种'.padEnd(columns.symbol) +
+            '异常比率'.padEnd(columns.ratio) +
+            '涨跌幅'.padEnd(columns.change) +
+            '收盘价\n';
         
         abnormalVolumes.forEach(result => {
             message += 
@@ -141,9 +141,6 @@ async function analyzeOkxMarketVolume() {
         const highVolumeSymbols = activeSymbols
             .filter(symbol => {
                 const volume = volume24h[symbol.instId] || 0;
-                if (volume < config.OKX_VOLUME_THRESHOLD) {
-                    console.log(`跳过 ${symbol.instId}, 24h成交量(${formatNumber(volume)})低于阈值${formatNumber(config.OKX_VOLUME_THRESHOLD)}`);
-                }
                 return volume > config.OKX_VOLUME_THRESHOLD;
             })
             .map(symbol => symbol.instId)
