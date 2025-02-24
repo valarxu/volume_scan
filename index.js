@@ -63,9 +63,9 @@ async function formatAnalysisResults(klineResults, exchange) {
         
         // 使用固定的空格数量来对齐
         message += 
-            '币种              ' +  // 16个空格
-            '异常比率          ' +  // 16个空格
-            '涨跌幅           ' +   // 15个空格
+            '币种'.padEnd(16) +
+            '异常比率'.padEnd(16) +
+            '涨跌幅'.padEnd(16) +
             '收盘价\n';
         
         abnormalVolumes.forEach(result => {
@@ -74,9 +74,9 @@ async function formatAnalysisResults(klineResults, exchange) {
             const priceStr = result.closePrice.toFixed(4);
 
             message += 
-                `${result.symbol.slice(0, 10)}              `.slice(0, 16) +  // 固定16个字符
-                `${ratioStr}              `.slice(0, 16) +                    // 固定16个字符
-                `${changeStr}              `.slice(0, 15) +                   // 固定15个字符
+                `${result.symbol.slice(0, 10)}`.padEnd(16) +
+                `${ratioStr}`.padEnd(16) +
+                `${changeStr}`.padEnd(16) +
                 priceStr + '\n';
         });
     } else {
