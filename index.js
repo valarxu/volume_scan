@@ -60,17 +60,12 @@ async function formatAnalysisResults(klineResults, exchange) {
     
     if (abnormalVolumes.length > 0) {
         message += `${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
-        const columns = {
-            symbol: 14,
-            ratio: 14,
-            change: 14,
-            price: 14
-        };
-
+        
+        // 使用固定的空格数量来对齐
         message += 
-            '币种'.padEnd(columns.symbol) +
-            '异常比率'.padEnd(columns.ratio) +
-            '涨跌幅'.padEnd(columns.change) +
+            '币种              ' +  // 16个空格
+            '异常比率          ' +  // 16个空格
+            '涨跌幅           ' +   // 15个空格
             '收盘价\n';
         
         abnormalVolumes.forEach(result => {
@@ -79,9 +74,9 @@ async function formatAnalysisResults(klineResults, exchange) {
             const priceStr = result.closePrice.toFixed(4);
 
             message += 
-                result.symbol.slice(0, columns.symbol).padEnd(columns.symbol) +
-                ratioStr.padEnd(columns.ratio) +
-                changeStr.padEnd(columns.change) +
+                `${result.symbol.slice(0, 10)}              `.slice(0, 16) +  // 固定16个字符
+                `${ratioStr}              `.slice(0, 16) +                    // 固定16个字符
+                `${changeStr}              `.slice(0, 15) +                   // 固定15个字符
                 priceStr + '\n';
         });
     } else {

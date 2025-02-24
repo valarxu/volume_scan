@@ -69,7 +69,7 @@ class OkxService {
             const volumeMap = {};
             response.data.data.forEach(ticker => {
                 if (ticker.instId.includes('USDT')) {
-                    const volume = parseFloat(ticker.turnover24h);
+                    const volume = parseFloat(ticker.volUsd24h);
                     volumeMap[ticker.instId] = volume;
                 }
             });
