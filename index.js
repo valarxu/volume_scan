@@ -76,9 +76,9 @@ async function formatAnalysisResults(klineResults, exchange) {
         abnormalVolumes.forEach(result => {
             message += 
                 result.symbol.slice(0, columns.symbol).padEnd(columns.symbol) +
-                result.volumeRatio.toFixed(2).padEnd(columns.ratio) +
-                result.priceChange.toFixed(2).padEnd(columns.change) +
-                result.closePrice.toFixed(4) + '\n';
+                String(result.volumeRatio.toFixed(2)).padEnd(columns.ratio) +
+                String(result.priceChange.toFixed(2)).padEnd(columns.change) +
+                String(result.closePrice.toFixed(4)).padEnd(columns.price) + '\n';
         });
     } else {
         message += `\n${exchange}未检测到异常成交量的交易对`;
