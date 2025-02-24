@@ -51,8 +51,18 @@ class BinanceService {
                 const closePrice = parseFloat(lastKline[4]);
                 const priceChange = ((closePrice - openPrice) / openPrice) * 100;
                 
-                const avgVolume = volumes.slice(0, -1).reduce((a, b) => a + b, 0) / (volumes.length - 1);
+                // 计算前19根K线的平均成交量
+                const previousVolumes = volumes.slice(0, -1);
+                const avgVolume = previousVolumes.reduce((a, b) => a + b, 0) / previousVolumes.length;
                 const currentVolume = volumes[volumes.length - 1];
+                const volumeRatio = currentVolume / avgVolume;
+
+                // 检查是否是第一次触发阈值
+                const isFirstTrigger = volumeRatio >= config.VOLUME_MULTIPLIER && 
+                    !previousVolumes.some((vol, i) => {
+                        const prevAvg = previousVolumes.slice(0, i).reduce((a, b) => a + b, 0) / (i || 1);
+                        return (vol / prevAvg) >= config.VOLUME_MULTIPLIER;
+                    });
                 
                 // 移除 USDT 后缀
                 const cleanSymbol = symbol.replace('USDT', '');
@@ -61,9 +71,10 @@ class BinanceService {
                     symbol: cleanSymbol,
                     currentVolume,
                     avgVolume,
-                    volumeRatio: currentVolume / avgVolume,
+                    volumeRatio,
                     priceChange,
-                    closePrice
+                    closePrice,
+                    isFirstTrigger
                 };
             }
             return null;

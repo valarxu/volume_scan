@@ -63,18 +63,30 @@ async function formatAnalysisResults(klineResults, exchange) {
         
         // 使用固定的空格数量来对齐
         message += 
-            '币种'.padEnd(16) +
+            '币种'.padEnd(20) +
             '异常比率'.padEnd(16) +
             '涨跌幅'.padEnd(16) +
             '收盘价\n';
+
+        // 设置高阈值
+        const HIGH_THRESHOLD = 5;
         
         abnormalVolumes.forEach(result => {
             const ratioStr = result.volumeRatio.toFixed(2);
             const changeStr = result.priceChange.toFixed(2);
             const priceStr = result.closePrice.toFixed(4);
 
+            // 添加emoji标记
+            let symbolWithEmoji = result.symbol;
+            if (result.isFirstTrigger) {
+                symbolWithEmoji = `⚡️${symbolWithEmoji}`; // 首次触发阈值的币种
+            }
+            if (result.volumeRatio >= HIGH_THRESHOLD) {
+                symbolWithEmoji = `🔥${symbolWithEmoji}`; // 高于高阈值的币种
+            }
+
             message += 
-                `${result.symbol.slice(0, 10)}`.padEnd(16) +
+                `${symbolWithEmoji.slice(0, 14)}`.padEnd(20) +
                 `${ratioStr}`.padEnd(16) +
                 `${changeStr}`.padEnd(16) +
                 priceStr + '\n';
