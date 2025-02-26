@@ -79,8 +79,8 @@ async function formatAnalysisResults(klineResults, exchange) {
         
         // 调整列顺序，币种放在最后
         message += 
-            '异常比率'.padEnd(10) +
-            '涨跌幅'.padEnd(10) +
+            '比率'.padEnd(12) +
+            '涨跌'.padEnd(12) +
             '币种\n';
 
         // 设置高阈值
@@ -100,8 +100,8 @@ async function formatAnalysisResults(klineResults, exchange) {
             }
 
             message += 
-                `${ratioStr}`.padEnd(10) +
-                `${changeStr}%`.padEnd(10) +
+                `${ratioStr}`.padEnd(12) +
+                `${changeStr}%`.padEnd(12) +
                 `${symbolWithEmoji}\n`;
         });
     } else {
