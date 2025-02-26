@@ -34,15 +34,16 @@ class BinanceService {
     // 获取K线数据
     async getKlineData(symbol) {
         try {
+            // 获取更多K线以确保有足够的历史数据
             const response = await axiosInstance.get(`${config.BINANCE_FAPI_BASE}/fapi/v1/klines`, {
                 params: {
                     symbol: symbol,
                     interval: '1h',
-                    limit: config.KLINE_LIMIT
+                    limit: 21  // 获取21根K线，包括当前K线
                 }
             });
             
-            if (response.data && response.data.length > 0) {
+            if (response.data && response.data.length >= 21) {
                 const klines = response.data;
                 const volumes = klines.map(k => parseFloat(k[5]));
                 
@@ -51,18 +52,15 @@ class BinanceService {
                 const closePrice = parseFloat(lastKline[4]);
                 const priceChange = ((closePrice - openPrice) / openPrice) * 100;
                 
-                // 计算前19根K线的平均成交量
+                // 计算前20根K线的平均成交量
                 const previousVolumes = volumes.slice(0, -1);
                 const avgVolume = previousVolumes.reduce((a, b) => a + b, 0) / previousVolumes.length;
                 const currentVolume = volumes[volumes.length - 1];
                 const volumeRatio = currentVolume / avgVolume;
 
-                // 检查是否是第一次触发阈值
+                // 检查是否是第一个触发阈值的K线
                 const isFirstTrigger = volumeRatio >= config.VOLUME_MULTIPLIER && 
-                    !previousVolumes.some((vol, i) => {
-                        const prevAvg = previousVolumes.slice(0, i).reduce((a, b) => a + b, 0) / (i || 1);
-                        return (vol / prevAvg) >= config.VOLUME_MULTIPLIER;
-                    });
+                    !previousVolumes.some(vol => vol >= avgVolume * config.VOLUME_MULTIPLIER);
                 
                 // 移除 USDT 后缀
                 const cleanSymbol = symbol.replace('USDT', '');
