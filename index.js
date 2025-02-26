@@ -77,11 +77,11 @@ async function formatAnalysisResults(klineResults, exchange) {
     if (abnormalVolumes.length > 0) {
         message += `${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
         
-        // 调整列宽，移除收盘价
+        // 调整列顺序，币种放在最后
         message += 
-            '币种'.padEnd(12) +
             '异常比率'.padEnd(10) +
-            '涨跌幅\n';
+            '涨跌幅'.padEnd(10) +
+            '币种\n';
 
         // 设置高阈值
         const HIGH_THRESHOLD = 5;
@@ -100,9 +100,9 @@ async function formatAnalysisResults(klineResults, exchange) {
             }
 
             message += 
-                `${symbolWithEmoji.slice(0, 10)}`.padEnd(12) +
                 `${ratioStr}`.padEnd(10) +
-                `${changeStr}%\n`;
+                `${changeStr}%`.padEnd(10) +
+                `${symbolWithEmoji}\n`;
         });
     } else {
         message += `\n${exchange}未检测到异常成交量的交易对`;
