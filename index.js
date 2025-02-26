@@ -33,9 +33,25 @@ async function sendTelegramMessage(message, retries = 3) {
             if (message.length <= MAX_LENGTH) {
                 await bot.sendMessage(TELEGRAM_CHAT_ID, message);
             } else {
-                const parts = message.match(new RegExp(`.{1,${MAX_LENGTH}}`, 'g')) || [];
-                for (const part of parts) {
-                    await bot.sendMessage(TELEGRAM_CHAT_ID, part);
+                // 将消息分割成最大3000字符的块
+                let remainingMessage = message;
+                while (remainingMessage.length > 0) {
+                    let chunk;
+                    if (remainingMessage.length <= MAX_LENGTH) {
+                        chunk = remainingMessage;
+                        remainingMessage = '';
+                    } else {
+                        // 尝试在合适的位置分割消息（如换行符）
+                        let splitPos = remainingMessage.substring(0, MAX_LENGTH).lastIndexOf('\n');
+                        if (splitPos === -1 || splitPos < MAX_LENGTH / 2) {
+                            // 如果没有找到合适的换行符，就在最大长度处截断
+                            splitPos = MAX_LENGTH;
+                        }
+                        chunk = remainingMessage.substring(0, splitPos);
+                        remainingMessage = remainingMessage.substring(splitPos);
+                    }
+                    
+                    await bot.sendMessage(TELEGRAM_CHAT_ID, chunk);
                     await new Promise(resolve => setTimeout(resolve, 500)); // 增加消息间隔到500ms
                 }
             }
@@ -61,12 +77,11 @@ async function formatAnalysisResults(klineResults, exchange) {
     if (abnormalVolumes.length > 0) {
         message += `${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
         
-        // 使用固定的空格数量来对齐
+        // 调整列宽，移除收盘价
         message += 
-            '币种'.padEnd(20) +
-            '异常比率'.padEnd(16) +
-            '涨跌幅'.padEnd(16) +
-            '收盘价\n';
+            '币种'.padEnd(12) +
+            '异常比率'.padEnd(10) +
+            '涨跌幅\n';
 
         // 设置高阈值
         const HIGH_THRESHOLD = 5;
@@ -74,7 +89,6 @@ async function formatAnalysisResults(klineResults, exchange) {
         abnormalVolumes.forEach(result => {
             const ratioStr = result.volumeRatio.toFixed(2);
             const changeStr = result.priceChange.toFixed(2);
-            const priceStr = result.closePrice.toFixed(4);
 
             // 添加emoji标记
             let symbolWithEmoji = result.symbol;
@@ -86,10 +100,9 @@ async function formatAnalysisResults(klineResults, exchange) {
             }
 
             message += 
-                `${symbolWithEmoji.slice(0, 14)}`.padEnd(20) +
-                `${ratioStr}`.padEnd(16) +
-                `${changeStr}`.padEnd(16) +
-                priceStr + '\n';
+                `${symbolWithEmoji.slice(0, 10)}`.padEnd(12) +
+                `${ratioStr}`.padEnd(10) +
+                `${changeStr}%\n`;
         });
     } else {
         message += `\n${exchange}未检测到异常成交量的交易对`;
