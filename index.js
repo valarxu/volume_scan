@@ -75,7 +75,7 @@ async function formatAnalysisResults(klineResults, exchange) {
     let message = ``;
     
     if (abnormalVolumes.length > 0) {
-        message += `${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
+        message += `⚠${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
         
         // 调整列顺序，币种放在最后
         message += 
@@ -232,8 +232,8 @@ async function runAnalysis() {
     }
 }
 
-// 设置定时任务：每小时的第55分钟执行
-cron.schedule('55 * * * *', runAnalysis);
+// 每天的03:50，07:50，11:50，15:50，19:50，23:50执行
+cron.schedule('50 3,7,11,15,19,23 * * *', runAnalysis);
 
 // 程序启动时执行一次
 console.log('启动加密货币市场监控程序...\n');

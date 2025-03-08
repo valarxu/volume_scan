@@ -38,7 +38,7 @@ class BinanceService {
             const response = await axiosInstance.get(`${config.BINANCE_FAPI_BASE}/fapi/v1/klines`, {
                 params: {
                     symbol: symbol,
-                    interval: '1h',
+                    interval: '4h',
                     limit: 21  // 获取21根K线，包括当前K线
                 }
             });
