@@ -75,7 +75,7 @@ async function formatAnalysisResults(klineResults, exchange) {
     let message = ``;
     
     if (abnormalVolumes.length > 0) {
-        message += `⚠${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
+        message += `😈${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
         
         // 调整列顺序，币种放在最后
         message += 
