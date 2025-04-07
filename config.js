@@ -3,7 +3,7 @@ require('dotenv').config();  // 添加这行到文件最上方
 module.exports = {
     VOLUME_THRESHOLD: 100000000,      // 币安24小时成交量阈值（USDT）
     OKX_VOLUME_THRESHOLD: 50000000,  // OKX24小时成交量阈值（USDT）
-    VOLUME_MULTIPLIER: 2,           // 当前小时成交量与过去24小时平均值的倍数阈值
+    VOLUME_MULTIPLIER: 3,           // 当前小时成交量与过去24小时平均值的倍数阈值
     BATCH_SIZE: 5,                 // 批量处理大小
     KLINE_LIMIT: 20, // K线数量
     BATCH_DELAY: 500, // 批处理延迟（毫秒）
