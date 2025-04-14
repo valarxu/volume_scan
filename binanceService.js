@@ -34,12 +34,11 @@ class BinanceService {
     // 获取K线数据
     async getKlineData(symbol) {
         try {
-            // 获取更多K线以确保有足够的历史数据
             const response = await axiosInstance.get(`${config.BINANCE_FAPI_BASE}/fapi/v1/klines`, {
                 params: {
                     symbol: symbol,
-                    interval: '4h',
-                    limit: 21  // 获取21根K线，包括当前K线
+                    interval: '1d',  // 改为日线
+                    limit: 21
                 }
             });
             
@@ -102,4 +101,4 @@ class BinanceService {
     }
 }
 
-module.exports = new BinanceService(); 
+module.exports = new BinanceService();

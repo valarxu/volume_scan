@@ -87,8 +87,8 @@ class OkxService {
             const response = await okxAxiosInstance.get('/api/v5/market/candles', {
                 params: {
                     instId: symbol,
-                    bar: '4H',
-                    limit: 21  // 获取21根K线，包括当前K线
+                    bar: '1D',  // 改为日线
+                    limit: 21
                 }
             });
             
@@ -151,4 +151,4 @@ class OkxService {
     }
 }
 
-module.exports = new OkxService(); 
+module.exports = new OkxService();

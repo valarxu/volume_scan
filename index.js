@@ -232,11 +232,11 @@ async function runAnalysis() {
     }
 }
 
-// 每天的03:50，07:50，11:50，15:50，19:50，23:50执行
-cron.schedule('50 3,7,11,15,19,23 * * *', runAnalysis);
+// 改为每天7:50执行一次
+cron.schedule('50 7 * * *', runAnalysis);
 
 // 程序启动时执行一次
 console.log('启动加密货币市场监控程序...\n');
 runAnalysis().then(() => {
     console.log('\n初始化数据获取完成！');
-}); 
+});
