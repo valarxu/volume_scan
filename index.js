@@ -67,7 +67,7 @@ async function sendTelegramMessage(message, retries = 3) {
     }
 }
 
-async function formatAnalysisResults(klineResults, exchange) {
+async function formatAnalysisResults(klineResults, exchange, interval = '1d') {
     const abnormalVolumes = klineResults
         .filter(result => result.volumeRatio >= config.VOLUME_MULTIPLIER)
         .sort((a, b) => b.volumeRatio - a.volumeRatio);
@@ -75,7 +75,9 @@ async function formatAnalysisResults(klineResults, exchange) {
     let message = ``;
     
     if (abnormalVolumes.length > 0) {
-        message += `😈${exchange} ${abnormalVolumes.length} 个交易对小时成交量异常：\n`;
+        // 根据周期显示不同的描述
+        const periodText = interval === '1d' ? '日线' : interval === '4h' ? '4小时' : '小时';
+        message += `😈${exchange} ${abnormalVolumes.length} 个交易对${periodText}成交量异常：\n`;
         
         // 调整列顺序，币种放在最后
         message += 
@@ -113,9 +115,9 @@ async function formatAnalysisResults(klineResults, exchange) {
     return message;
 }
 
-async function analyzeBinanceMarketVolume() {
+async function analyzeBinanceMarketVolume(interval = '1d') {
     try {
-        console.log('开始币安市场成交量分析...\n');
+        console.log(`开始币安市场成交量分析(${interval})...\n`);
 
         const activeSymbols = await binanceService.getActiveSymbols();
         console.log(`获取到 ${activeSymbols.length} 个活跃合约\n`);
@@ -133,13 +135,13 @@ async function analyzeBinanceMarketVolume() {
         console.log(`找到 ${highVolumeSymbols.length} 个交易量超过阈值的合约\n`);
 
         console.log('正在分析K线成交量...\n');
-        const klineResults = await binanceService.processKlinesInBatches(highVolumeSymbols);
+        const klineResults = await binanceService.processKlinesInBatches(highVolumeSymbols, interval);
 
         // 控制台打印
-        await printAnalysisResults(klineResults, 'Binance');
+        await printAnalysisResults(klineResults, 'Binance', interval);
         
         // Telegram推送
-        const message = await formatAnalysisResults(klineResults, 'Binance');
+        const message = await formatAnalysisResults(klineResults, 'Binance', interval);
         await sendTelegramMessage(message);
 
     } catch (error) {
@@ -148,14 +150,14 @@ async function analyzeBinanceMarketVolume() {
     }
 }
 
-async function analyzeOkxMarketVolume() {
+async function analyzeOkxMarketVolume(interval = '1d') {
     try {
         if (!isOkxConfigured) {
             console.log('OKX API未配置，跳过OKX市场分析');
             return;
         }
 
-        console.log('开始OKX市场成交量分析...\n');
+        console.log(`开始OKX市场成交量分析(${interval})...\n`);
 
         const activeSymbols = await okxService.getActiveSymbols();
         console.log(`获取到 ${activeSymbols.length} 个活跃合约\n`);
@@ -173,13 +175,13 @@ async function analyzeOkxMarketVolume() {
         console.log(`找到 ${highVolumeSymbols.length} 个交易量超过阈值的合约\n`);
 
         console.log('正在分析K线成交量...\n');
-        const klineResults = await okxService.processKlinesInBatches(highVolumeSymbols);
+        const klineResults = await okxService.processKlinesInBatches(highVolumeSymbols, interval);
 
         // 控制台打印
-        await printAnalysisResults(klineResults, 'OKX');
+        await printAnalysisResults(klineResults, 'OKX', interval);
         
         // Telegram推送
-        const message = await formatAnalysisResults(klineResults, 'OKX');
+        const message = await formatAnalysisResults(klineResults, 'OKX', interval);
         await sendTelegramMessage(message);
 
     } catch (error) {
@@ -188,13 +190,15 @@ async function analyzeOkxMarketVolume() {
     }
 }
 
-async function printAnalysisResults(klineResults, exchange) {
+async function printAnalysisResults(klineResults, exchange, interval = '1d') {
     const abnormalVolumes = klineResults
         .filter(result => result.volumeRatio >= config.VOLUME_MULTIPLIER)
         .sort((a, b) => b.volumeRatio - a.volumeRatio);
 
     if (abnormalVolumes.length > 0) {
-        console.log(`\n${exchange}检测到 ${abnormalVolumes.length} 个交易对当前小时成交量异常：`);
+        // 根据周期显示不同的描述
+        const periodText = interval === '1d' ? '日线' : interval === '4h' ? '4小时' : '小时';
+        console.log(`\n${exchange}检测到 ${abnormalVolumes.length} 个交易对${periodText}成交量异常：`);
         console.log('交易对      成交量比率    当前成交量    平均成交量    涨跌幅    收盘价');
         console.log('--------------------------------------------------------------------------------');
         
@@ -215,16 +219,16 @@ async function printAnalysisResults(klineResults, exchange) {
     console.log(`${exchange}检查完成时间：${new Date().toLocaleString()}`);
 }
 
-async function runAnalysis() {
-    console.log('开始执行市场分析...');
+async function runAnalysis(interval = '1d') {
+    console.log(`开始执行市场分析，K线周期: ${interval}...`);
     
     try {
         // 串行执行而不是并行，避免同时发起太多请求
-        await analyzeBinanceMarketVolume().catch(error => {
+        await analyzeBinanceMarketVolume(interval).catch(error => {
             console.error('币安分析失败:', error.message);
         });
         
-        await analyzeOkxMarketVolume().catch(error => {
+        await analyzeOkxMarketVolume(interval).catch(error => {
             console.error('OKX分析失败:', error.message);
         });
     } catch (error) {
@@ -232,11 +236,14 @@ async function runAnalysis() {
     }
 }
 
-// 改为每天7:50执行一次
-cron.schedule('50 7 * * *', runAnalysis);
+// 每天7:50执行一次，使用1d周期
+cron.schedule('50 7 * * *', () => runAnalysis('1d'));
 
-// 程序启动时执行一次
+// 每天19:50执行一次，使用4h周期
+cron.schedule('50 19 * * *', () => runAnalysis('4h'));
+
+// 程序启动时执行一次，使用1d周期
 console.log('启动加密货币市场监控程序...\n');
-runAnalysis().then(() => {
+runAnalysis('1d').then(() => {
     console.log('\n初始化数据获取完成！');
 });

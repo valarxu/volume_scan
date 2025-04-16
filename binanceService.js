@@ -32,12 +32,12 @@ class BinanceService {
     }
 
     // 获取K线数据
-    async getKlineData(symbol) {
+    async getKlineData(symbol, interval = '1d') {
         try {
             const response = await axiosInstance.get(`${config.BINANCE_FAPI_BASE}/fapi/v1/klines`, {
                 params: {
                     symbol: symbol,
-                    interval: '1d',  // 改为日线
+                    interval: interval,  // 使用传入的周期参数
                     limit: 21
                 }
             });
@@ -82,12 +82,12 @@ class BinanceService {
     }
 
     // 批量处理K线数据
-    async processKlinesInBatches(symbols) {
+    async processKlinesInBatches(symbols, interval = '1d') {
         const results = [];
         
         for (let i = 0; i < symbols.length; i += config.BATCH_SIZE) {
             const batch = symbols.slice(i, i + config.BATCH_SIZE);
-            const promises = batch.map(symbol => this.getKlineData(symbol));
+            const promises = batch.map(symbol => this.getKlineData(symbol, interval));
             
             const batchResults = await Promise.all(promises);
             results.push(...batchResults.filter(r => r !== null));

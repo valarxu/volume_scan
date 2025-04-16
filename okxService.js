@@ -82,12 +82,17 @@ class OkxService {
     }
 
     // 获取K线数据
-    async getKlineData(symbol) {
+    async getKlineData(symbol, interval = '1D') {
         try {
+            // 将传入的interval转换为OKX API所需的格式
+            let bar = interval;
+            if (interval === '1d') bar = '1D';
+            if (interval === '4h') bar = '4H';
+            
             const response = await okxAxiosInstance.get('/api/v5/market/candles', {
                 params: {
                     instId: symbol,
-                    bar: '1D',  // 改为日线
+                    bar: bar,  // 使用转换后的周期参数
                     limit: 21
                 }
             });
@@ -132,12 +137,12 @@ class OkxService {
     }
 
     // 批量处理K线数据
-    async processKlinesInBatches(symbols) {
+    async processKlinesInBatches(symbols, interval = '1D') {
         const results = [];
         
         for (let i = 0; i < symbols.length; i += config.BATCH_SIZE) {
             const batch = symbols.slice(i, i + config.BATCH_SIZE);
-            const promises = batch.map(symbol => this.getKlineData(symbol));
+            const promises = batch.map(symbol => this.getKlineData(symbol, interval));
             
             const batchResults = await Promise.all(promises);
             results.push(...batchResults.filter(r => r !== null));
